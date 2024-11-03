@@ -1,3 +1,3 @@
 [submodule "SIMM-Client/Dependencies/ViGEmClient"]
 	path = SIMM-Client/Dependencies/ViGEmClient
-	url = https://github.com/nefarius/ViGEmClient.git
+	url = https://github.com/nefarius/ViGEmClient
