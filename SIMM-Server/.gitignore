@@ -1,0 +1,6 @@
+[Bb]uild/
+SIMM-Server/
+x64/
+*.nro
+*.nacp
+*.elf
