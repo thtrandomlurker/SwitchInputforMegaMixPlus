@@ -44,6 +44,8 @@ You will need vcpkg installed. Open the solution in Visual Studio 2022 or Later,
 vcpkg install libusb tomlplusplus
 ```
 
+You will also need to build ViGEmClient ahead of time too. Simply open ViGEmClient's solution and build it within visual studio, which should produce the required lib. I'm sure there's a better way to go about it but it works for now, refinements can come later.
+
 Afterwards simply build SIMM-Client as normal, which should output SIMM-Client.dll, with libusb-1.0.dll in the same folder copied from the vcpkg install. Make sure to copy both to the mod directory as libusb is required.
 
 ## Other Requirements
