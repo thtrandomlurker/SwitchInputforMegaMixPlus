@@ -398,3 +398,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# We do not want to lose Detours
+!SIMM-Client/Dependencies/Detours/Lib
