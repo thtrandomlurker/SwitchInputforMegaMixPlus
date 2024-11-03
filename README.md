@@ -37,6 +37,7 @@ make
 ### SIMM-Client
 Before continuing, make sure to restore submodules if you never cloned using `--recurse-submodules` using `git submodule update --init --recursive` from within the SwitchInputforMegaMix+ directory.
 
+To begin, building currently only works on Release. It's probably a simple fix, but i really want to get this out before i work on it more. Besides, it's stable *enough* i hope.
 
 You will need vcpkg installed. Open the solution in Visual Studio 2022 or Later, and open a terminal window using Alt+`. then install libusb and tomlplusplus
 
@@ -44,7 +45,7 @@ You will need vcpkg installed. Open the solution in Visual Studio 2022 or Later,
 vcpkg install libusb tomlplusplus
 ```
 
-You will also need to build ViGEmClient ahead of time too. Simply open ViGEmClient's solution and build it within visual studio, which should produce the required lib. I'm sure there's a better way to go about it but it works for now, refinements can come later.
+You will also need to build ViGEmClient ahead of time too. Simply open ViGEmClient's solution and build it within visual studio targetting Release_LIB and Debug_LIB, which should produce our desired libraries. I'm sure there's a better way to go about it but it works for now, refinements can come later.
 
 Afterwards simply build SIMM-Client as normal, which should output SIMM-Client.dll, with libusb-1.0.dll in the same folder copied from the vcpkg install. Make sure to copy both to the mod directory as libusb is required.
 
