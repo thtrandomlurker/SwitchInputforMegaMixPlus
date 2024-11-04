@@ -205,7 +205,7 @@ void checkSIMM() {
 	while (runSIMMCheckThread.load()) {
 		count = libusb_get_device_list(ctx, &device_list);
 		if (count < 0) {
-			std::cerr << "Error getting device list" << std::endl;
+			printf("Error getting device list\n");
 			break;
 		}
 
@@ -221,7 +221,7 @@ void checkSIMM() {
 						libusb_device_handle* handle;
 						if (libusb_open(device, &handle) == 0) {
 							if (libusb_claim_interface(handle, 0) == 0) {
-								std::cout << "Device connected and interface claimed" << std::endl;
+								printf("Device connected and interface claimed\n");
 
 								// Lock and update shared device handle
 								{
@@ -231,12 +231,12 @@ void checkSIMM() {
 								}
 							}
 							else {
-								std::cerr << "Failed to claim interface" << std::endl;
+								printf("Failed to claim interface\n");
 								libusb_close(handle);
 							}
 						}
 						else {
-							std::cerr << "Failed to open device" << std::endl;
+							printf("Failed to open device\n");
 						}
 					}
 					break;
@@ -253,7 +253,7 @@ void checkSIMM() {
 				libusb_close(handle);
 			}
 			usbConnected.store(false);
-			std::cout << "Device disconnected and interface released" << std::endl;
+			printf("Device disconnected and interface released\n");
 		}
 
 		libusb_free_device_list(device_list, 1);
@@ -305,7 +305,7 @@ void updateInput() {
 		state.Gamepad.bLeftTrigger = ((input.heldButtons & HidNpadButton_ZL) > 0) ? 255 : 0;
 		state.Gamepad.bRightTrigger = ((input.heldButtons & HidNpadButton_ZR) > 0) ? 255 : 0;
 
-		printf("%d\r", input.stickLX);
+		//printf("%d\r", input.stickLX);
 
 		state.Gamepad.sThumbLX = input.stickLX;
 		state.Gamepad.sThumbLY = input.stickLY;
@@ -401,7 +401,6 @@ HOOK(int32_t, __fastcall, UpdateMixModeCombo, 0x140636120, void* a1, void* a2) {
 		}
 	}*/
 	return val;
-	
 }
 
 void cleanup() {

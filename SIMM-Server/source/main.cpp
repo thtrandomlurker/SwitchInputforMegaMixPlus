@@ -13,7 +13,7 @@
 #include <malloc.h>
 
 #include <switch.h>
-static char sendTest[] = "This is the captain of the pike.\nAre you receiving me all right?\n\0";
+//static char sendTest[] = "This is the captain of the pike.\nAre you receiving me all right?\n\0";
 
 typedef enum REQUEST_TYPE : uint32_t {
     REQUEST_NONE,
@@ -57,6 +57,17 @@ typedef struct {
     float rightMotorLargeStrength;
 } S_REQUEST_RUMBLE;
 
+typedef struct {
+    char sankakuFinger;
+    char shikakuFinger;
+    char batsuFinger;
+    char maruFinger;
+    char leftSlideFinger;
+    short leftSlideCurrentCoord;
+    char rightSlideFinger;
+    short rightSlideCurrentCoord;
+} I_TOUCH_INPUT_STATE;
+
 int main() {
     consoleInit(NULL);
 
@@ -64,8 +75,13 @@ int main() {
     padConfigureInput(1, HidNpadStyleSet_NpadStandard);
 
     // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+
     PadState pad;
     padInitializeDefault(&pad);
+
+    // Initialize the touch screen for touch input.
+    hidInitializeTouchScreen();
+
 
     // It's necessary to initialize these separately as they all have different handle values
     HidSixAxisSensorHandle handles[4];
@@ -136,12 +152,46 @@ int main() {
 
     bool quitSignal = false;
 
+    I_TOUCH_INPUT_STATE prevInputState = { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', 0, '\xFF', 0};
+
     // Main loop
     while (appletMainLoop())
     {
         // Scan the gamepad. This should be done once for each frame
 
         padUpdate(&pad);
+
+        HidTouchScreenState screenState = { 0 };
+        hidGetTouchScreenStates(&screenState, 1);
+
+        I_TOUCH_INPUT_STATE currentInputState = { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', 0, '\xFF', 0 };
+
+        for (s32 i = 0; i < screenState.count; i++) {
+            // buttons
+            //printf("Touch at %d;%d\n", screenState.touches[i].x, screenState.touches[i].y);
+            if (screenState.touches[i].x >= 0 && screenState.touches[i].x <= 319 && screenState.touches[i].y >= 360) {
+                currentInputState.sankakuFinger = screenState.touches[i].finger_id;
+            }
+            if (screenState.touches[i].x >= 320 && screenState.touches[i].x <= 639 && screenState.touches[i].y >= 360) {
+                currentInputState.shikakuFinger = screenState.touches[i].finger_id;
+            }
+            if (screenState.touches[i].x >= 640 && screenState.touches[i].x <= 959 && screenState.touches[i].y >= 360) {
+                currentInputState.batsuFinger = screenState.touches[i].finger_id;
+            }
+            if (screenState.touches[i].x >= 960 && screenState.touches[i].x <= 1279 && screenState.touches[i].y >= 360) {
+                currentInputState.maruFinger = screenState.touches[i].finger_id;
+               //printf("Maru pressed\n");
+            }
+            // slides.
+            if ((screenState.touches[i].x >= 0 && screenState.touches[i].x <= 639 && screenState.touches[i].y <= 360) || (prevInputState.leftSlideFinger == screenState.touches[i].finger_id)) {
+                currentInputState.leftSlideFinger = screenState.touches[i].finger_id;
+                currentInputState.leftSlideCurrentCoord = screenState.touches[i].x;
+            }
+            if ((screenState.touches[i].x >= 640 && screenState.touches[i].x <= 1280 && screenState.touches[i].y <= 360) || (prevInputState.rightSlideFinger == screenState.touches[i].finger_id)) {
+                currentInputState.rightSlideFinger = screenState.touches[i].finger_id;
+                currentInputState.rightSlideCurrentCoord = screenState.touches[i].x;
+            }
+        }
 
         // padGetButtonsDown returns the set of buttons that have been newly pressed in this frame compared to the previous one
         u64 kDown = padGetButtonsDown(&pad);
@@ -150,6 +200,42 @@ int main() {
         
         HidAnalogStickState lStick = padGetStickPos(&pad, 0);
         HidAnalogStickState rStick = padGetStickPos(&pad, 1);
+
+        // now we're going to update the input state to add in our pressed buttons
+
+        if (currentInputState.sankakuFinger != '\xFF') {
+            kHeld |= HidNpadButton_X;
+        }
+        if (currentInputState.shikakuFinger != '\xFF') {
+            kHeld |= HidNpadButton_Y;
+        }
+        if (currentInputState.batsuFinger != '\xFF') {
+            kHeld |= HidNpadButton_B;
+        }
+        if (currentInputState.maruFinger != '\xFF') {
+            kHeld |= HidNpadButton_A;
+            //printf("Injecting A press\n");
+        }
+
+        if (currentInputState.leftSlideFinger != '\xFF') {
+            if (currentInputState.leftSlideCurrentCoord < prevInputState.leftSlideCurrentCoord) {
+                lStick.x = -0x8000;
+            }
+            else if (currentInputState.leftSlideCurrentCoord > prevInputState.leftSlideCurrentCoord) {
+                lStick.x = 0x7FFF;
+            }
+        }
+
+        if (currentInputState.rightSlideFinger != '\xFF') {
+            if (currentInputState.rightSlideCurrentCoord < prevInputState.rightSlideCurrentCoord) {
+                rStick.x = -0x8000;
+            }
+            else if (currentInputState.rightSlideCurrentCoord > prevInputState.rightSlideCurrentCoord) {
+                rStick.x = 0x7FFF;
+            }
+        }
+
+        prevInputState = currentInputState;
 
 #ifdef USE_NETWORK
         char recvBuffer[32] = { '\0' };

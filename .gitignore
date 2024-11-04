@@ -401,3 +401,7 @@ FodyWeavers.xsd
 
 # We do not want to lose Detours
 !SIMM-Client/Dependencies/Detours/Lib
+!SIMM-Client/Dependencies/Detours/Lib/x86
+!SIMM-Client/Dependencies/Detours/Lib/x86/*.pdb
+!SIMM-Client/Dependencies/Detours/Lib/x64
+!SIMM-Client/Dependencies/Detours/Lib/x64/*.pdb
