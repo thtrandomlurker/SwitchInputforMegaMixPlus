@@ -59,7 +59,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS    :=    -lSDL2 -lSDL2_ttf -lSDL2_gfx -lSDL2_image -lSDL2_mixer -lpng -ljpeg -lglad -lEGL -lglapi -ldrm_nouveau -lvorbisidec -logg -lmpg123 -lmodplug -lstdc++ -lavformat -lavcodec -lavutil -ldav1d -lswresample -lswscale -lbz2 -lass -ltheora -lvorbis -lopus `sdl2-config --libs` `freetype-config --libs` `$(PREFIX)pkg-config opusfile --libs` -lnx
+LIBS    :=    -lSDL2 -lSDL2_ttf -lSDL2_gfx -lSDL2_image -lSDL2_mixer -lpng -ljpeg -lglad -lGLESv2 -lEGL -lglapi -ldrm_nouveau -lvorbisidec -logg -lmpg123 -lmodplug -lstdc++ -lavformat -lavcodec -lavutil -ldav1d -lswresample -lswscale -lbz2 -lass -ltheora -lvorbis -lopus `sdl2-config --libs` `freetype-config --libs` `$(PREFIX)pkg-config opusfile --libs` -lnx
 
 
 #---------------------------------------------------------------------------------

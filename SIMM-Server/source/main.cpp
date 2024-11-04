@@ -13,6 +13,8 @@
 #include <malloc.h>
 
 #include <switch.h>
+
+#include <SDL2/SDL.h>
 //static char sendTest[] = "This is the captain of the pike.\nAre you receiving me all right?\n\0";
 
 typedef enum REQUEST_TYPE : uint32_t {
@@ -69,7 +71,6 @@ typedef struct {
 } I_TOUCH_INPUT_STATE;
 
 int main() {
-    consoleInit(NULL);
 
     // Configure our supported input layout: a single player with standard controller styles
     padConfigureInput(1, HidNpadStyleSet_NpadStandard);
@@ -150,13 +151,41 @@ int main() {
 
 #endif
 
+    int done = 0, x = 0, w = 1920, h = 1080;
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Event event;
+    SDL_Window* window = SDL_CreateWindow("sdl2_gles2", 0, 0, 1920, 1080, 0);
+    if (!window) {
+        SDL_Log("SDL_CreateWindow: %s\n", SDL_GetError());
+        SDL_Quit();
+        return -1;
+    }
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!renderer) {
+        SDL_Log("SDL_CreateRenderer: %s\n", SDL_GetError());
+        SDL_Quit();
+        return -1;
+    }
+
     bool quitSignal = false;
 
     I_TOUCH_INPUT_STATE prevInputState = { '\xFF', '\xFF', '\xFF', '\xFF', '\xFF', 0, '\xFF', 0};
 
+    SDL_Rect sankakuRect = { 0, 540, (1920 / 4), (1080 / 2) };
+    SDL_Rect shikakuRect = { ((1920 / 4) * 1), 540, (1920 / 4), (1080 / 2) };
+    SDL_Rect batsuRect = { ((1920 / 4) * 2), 540, (1920 / 4), (1080 / 2) };
+    SDL_Rect maruRect = { ((1920 / 4) * 3), 540, (1920 / 4), (1080 / 2) };
+
     // Main loop
     while (appletMainLoop())
     {
+
+        SDL_SetRenderDrawColor(renderer, 25, 51, 76, 255); // Background color
+        SDL_RenderClear(renderer);
+
+        //SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red color for the box
+        //SDL_Rect rect = { 640 - 160, 360 - 180, 320, 360 }; // Centered rectangle
+        //SDL_RenderFillRect(renderer, &rect);
         // Scan the gamepad. This should be done once for each frame
 
         padUpdate(&pad);
@@ -171,16 +200,40 @@ int main() {
             //printf("Touch at %d;%d\n", screenState.touches[i].x, screenState.touches[i].y);
             if (screenState.touches[i].x >= 0 && screenState.touches[i].x <= 319 && screenState.touches[i].y >= 360) {
                 currentInputState.sankakuFinger = screenState.touches[i].finger_id;
+                SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+                SDL_RenderFillRect(renderer, &sankakuRect);
+            }
+            else {
+                SDL_SetRenderDrawColor(renderer, 0, 127, 0, 255);
+                SDL_RenderFillRect(renderer, &sankakuRect);
             }
             if (screenState.touches[i].x >= 320 && screenState.touches[i].x <= 639 && screenState.touches[i].y >= 360) {
                 currentInputState.shikakuFinger = screenState.touches[i].finger_id;
+                SDL_SetRenderDrawColor(renderer, 255, 127, 255, 255);
+                SDL_RenderFillRect(renderer, &shikakuRect);
+            }
+            else {
+                SDL_SetRenderDrawColor(renderer, 127, 63, 127, 255);
+                SDL_RenderFillRect(renderer, &shikakuRect);
             }
             if (screenState.touches[i].x >= 640 && screenState.touches[i].x <= 959 && screenState.touches[i].y >= 360) {
                 currentInputState.batsuFinger = screenState.touches[i].finger_id;
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+                SDL_RenderFillRect(renderer, &batsuRect);
+            }
+            else {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 127, 255);
+                SDL_RenderFillRect(renderer, &batsuRect);
             }
             if (screenState.touches[i].x >= 960 && screenState.touches[i].x <= 1279 && screenState.touches[i].y >= 360) {
                 currentInputState.maruFinger = screenState.touches[i].finger_id;
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                SDL_RenderFillRect(renderer, &maruRect);
                //printf("Maru pressed\n");
+            }
+            else {
+                SDL_SetRenderDrawColor(renderer, 127, 0, 0, 255);
+                SDL_RenderFillRect(renderer, &maruRect);
             }
             // slides.
             if ((screenState.touches[i].x >= 0 && screenState.touches[i].x <= 639 && screenState.touches[i].y <= 360) || (prevInputState.leftSlideFinger == screenState.touches[i].finger_id)) {
@@ -192,6 +245,11 @@ int main() {
                 currentInputState.rightSlideCurrentCoord = screenState.touches[i].x;
             }
         }
+
+
+
+
+        SDL_RenderPresent(renderer);
 
         // padGetButtonsDown returns the set of buttons that have been newly pressed in this frame compared to the previous one
         u64 kDown = padGetButtonsDown(&pad);
@@ -325,7 +383,6 @@ int main() {
         int bytesReceived = usbCommsRead(recvBuffer, 32);
         if (bytesReceived <= 0) {
             printf("ERROR: NO BYTES RECEIVED.\n");
-            consoleUpdate(NULL);
             break; // Exit the loop if the client disconnects or an error occurs
         }
         else {
@@ -339,7 +396,6 @@ int main() {
             case REQUEST_NONE:
                 usbCommsWrite(buffer, 256);
                 printf("Sent %d to Client.\n", req);
-                consoleUpdate(NULL);
                 break;
             case REQUEST_BUTTONS:
                 ((RESPONSE_BUTTONS*)(buffer))->type = req;
@@ -348,7 +404,6 @@ int main() {
                 ((RESPONSE_BUTTONS*)(buffer))->upButtons = kUp;
                 usbCommsWrite(buffer, 256);
                 printf("Sent %d, %lx to Client.\n", req, kHeld);
-                consoleUpdate(NULL);
                 break;
             case REQUEST_ANGLE:
                 if (style_set & HidNpadStyleTag_NpadJoyDual) {
@@ -396,11 +451,9 @@ int main() {
                 break;
             case REQUEST_INVALID:
                 printf("Received invalid request %d\n", req);
-                consoleUpdate(NULL);
                 break;
             default:
                 printf("Received invalid request %d\n", req);
-                consoleUpdate(NULL);
                 break;
             }
         }
@@ -412,8 +465,6 @@ int main() {
         if (quitSignal) {
             break;
         }
-
-        consoleUpdate(NULL);
     }
 #ifdef USE_NETWORK
 
@@ -432,6 +483,9 @@ int main() {
 
     usbHsExit();
 #endif
-    consoleExit(NULL);
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     return 0;
 }
